@@ -6,6 +6,8 @@ import org.zalando.jsonapi.model.JsonApiObject._
 import org.zalando.jsonapi.model.implicits.JsonApiObjectValueConversions._
 
 class JsonApiObjectValueConversionsSpec extends WordSpec with Matchers {
+  def convertAnyToValue[A](a: A)(implicit convertToValue: ConvertToValue[A]) = convertToValue(a)
+
   "scala values" should {
     "be converted to string values" in {
       convertAnyToValue("string") should be(StringValue("string"))
@@ -20,28 +22,31 @@ class JsonApiObjectValueConversionsSpec extends WordSpec with Matchers {
       convertAnyToValue(true) should be(TrueValue)
       convertAnyToValue(false) should be(FalseValue)
     }
-    "be converted to js array values" in {
-      convertAnyToValue(Seq("one", 2, Map("3" → 4d), false, null)) should be(JsArrayValue(List(
-        StringValue("one"),
-        NumberValue(2),
-        JsObjectValue(List(Attribute("3", NumberValue(4d)))),
-        FalseValue,
-        NullValue
-      )))
-    }
-    "be converted to js object values" in {
-      convertAnyToValue(Map(
-        "one" → 2,
-        "3" → List(4f, true, null)
-      )) should be(JsObjectValue(List(
-        Attribute("one", NumberValue(2)),
-        Attribute("3", JsArrayValue(List(
-          NumberValue(4f),
-          TrueValue,
-          NullValue
-        )))
-      )))
-    }
+    // todo why would we even allow to compile this???
+
+//    "be converted to js array values" in {
+//      convertAnyToValue(Seq("one", 2, Map("3" → 4d), false, null)) should be(JsArrayValue(List(
+//        StringValue("one"),
+//        NumberValue(2),
+//        JsObjectValue(List(Attribute("3", NumberValue(4d)))),
+//        FalseValue,
+//        NullValue
+//      )))
+//    }
+    // todo why would we even allow to compile this???
+//    "be converted to js object values" in {
+//      convertAnyToValue(Map(
+//        "one" → 2,
+//        "3" → List(4f, true, null)
+//      )) should be(JsObjectValue(List(
+//        Attribute("one", NumberValue(2)),
+//        Attribute("3", JsArrayValue(List(
+//          NumberValue(4f),
+//          TrueValue,
+//          NullValue
+//        )))
+//      )))
+//    }
     "be converted to null values" in {
       convertAnyToValue(null) should be(NullValue)
     }
@@ -52,14 +57,10 @@ class JsonApiObjectValueConversionsSpec extends WordSpec with Matchers {
         convertAnyToValue(value) should be (value)
       }
     }
-    "throw an error for unconvertible types" in {
-      the[UnconvertibleTypeError] thrownBy {
-        convertAnyToValue(Map(1 → 2))
-      } should have message "Maps must have string keys to be converted to JsonApiObject Values"
+    "not allow unconvertible types" in {
+      """convertAnyToValue(Map(1 → 2))""" shouldNot compile
 
-      the[UnconvertibleTypeError] thrownBy {
-        convertAnyToValue(new java.util.Date)
-      } should have message "Can not convert java.util.Date to JsonApiObject Value"
+      """convertAnyToValue(new java.util.Date)""" shouldNot compile
     }
   }
 }

@@ -4,6 +4,7 @@ import org.scalatest.{Matchers, WordSpec}
 import org.zalando.jsonapi.model.Attribute
 import org.zalando.jsonapi.model.JsonApiObject._
 import org.zalando.jsonapi.model.implicits.AttributeConversions._
+import org.zalando.jsonapi.model.implicits.JsonApiObjectValueConversions._
 
 class AttributeConversionsSpec extends WordSpec with Matchers {
   "scala tuples" should {
