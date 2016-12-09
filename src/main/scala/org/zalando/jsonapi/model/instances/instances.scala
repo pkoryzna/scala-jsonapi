@@ -1,9 +1,8 @@
 package org.zalando.jsonapi.model.instances
 
-import org.zalando.jsonapi.model.implicits.JsonApiObjectValueConversions.ConvertToValue
 import org.zalando.jsonapi.model.{Attribute, Attributes}
-import shapeless.labelled.FieldType
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness, labelled}
+import labelled.FieldType
 
 trait AttributesWriter[A] {
   /**
@@ -36,13 +35,13 @@ object AttributesWriter {
     convertPairToOptionalAttribute(witness.value.name -> v).toList
   }
 
-  implicit val hnilWriter = createWriter { hn: HNil =>
+  implicit val hnilWriter: AttributesWriter[HNil] = createWriter { hn: HNil =>
     List.empty[Attribute]
   }
 
   implicit def hlistWriter[K <: Symbol, H, T <: HList](
     implicit
-    hWriter: Lazy[AttributesWriter[H]],
+    hWriter: Lazy[AttributesWriter[FieldType[K, H]]],
     tWriter: AttributesWriter[T]
   ): AttributesWriter[FieldType[K, H] :: T] = createWriter {
     case h :: t =>
@@ -57,15 +56,12 @@ object AttributesWriter {
 
 
   /**
-   * Creates attributes writer for an object, serializing all fields as attributes.
+   * Serializes whole object as Attributes.
    */
-  def whole[A, R](a: A)(implicit lg: LabelledGeneric.Aux[A, R], writer: Lazy[AttributesWriter[R]]): Attributes = {
+  def whole[A, R <: HList](a: A)(implicit lg: LabelledGeneric.Aux[A, R], writer: Lazy[AttributesWriter[R]]): Attributes = {
     writer.value.asAttributes(lg.to(a))
   }
 
-  case class Thing(name: String, age: Int)
-
-  val serialized = whole(Thing("asdf", 123))
 }
 
 
