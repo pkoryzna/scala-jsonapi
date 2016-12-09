@@ -12,7 +12,7 @@ object JsonApiObjectValueConversions {
     case null => NullValue
   }
 
-  private def makeConv[From](f: From => Value): ConvertToValue[From] = nullConv.orElse(PartialFunction(f))
+  def makeConv[From](f: From => Value): ConvertToValue[From] = nullConv.orElse(PartialFunction(f))
 
   implicit val string2Value: ConvertToValue[String] = makeConv { s: String => StringValue(s) }
   implicit val boolean2Value = makeConv[Boolean] {
