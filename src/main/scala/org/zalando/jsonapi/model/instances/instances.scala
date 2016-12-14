@@ -1,8 +1,10 @@
 package org.zalando.jsonapi.model.instances
 
-import org.zalando.jsonapi.model.{Attribute, Attributes}
-import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness, labelled}
+import org.zalando.jsonapi.model.{Attribute, Attributes, RootObject}
+import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Poly1, Witness, labelled}
 import labelled.FieldType
+import shapeless.ops.record._
+import org.zalando.jsonapi.model.RootObject.ResourceObject
 
 trait AttributesWriter[A] {
   /**
@@ -35,6 +37,8 @@ object AttributesWriter {
     convertPairToOptionalAttribute(witness.value.name -> v).toList
   }
 
+  // todo instance for hlist of key-val pairs for 'only'
+
   implicit val hnilWriter: AttributesWriter[HNil] = createWriter { hn: HNil =>
     List.empty[Attribute]
   }
@@ -62,6 +66,19 @@ object AttributesWriter {
     writer.value.asAttributes(lg.to(a))
   }
 
+  def only[A, R <: HList, KS <: HList, OutVS <: HList, OutZip <: HList](keys: KS)(a: A)(implicit
+    lg: LabelledGeneric.Aux[A, R],
+    selectAll: SelectAll.Aux[R, KS, OutVS],
+    zip: shapeless.ops.hlist.ZipWithKeys.Aux[KS, OutVS, OutZip],
+    writer: Lazy[AttributesWriter[OutZip]]
+  ): Attributes = {
+    val rec = lg.to(a)
+    val selected = selectAll(rec)
+    writer.value.asAttributes(selected.zipWithKeys(ks))
+  }
+
 }
 
-
+trait ResourceObjectWriter[A] {
+  def write(a: A)(implicit aw: AttributesWriter[A]): ResourceObject
+}
